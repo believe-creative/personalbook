@@ -66,14 +66,15 @@ export default function MessageDetails({ route, navigation }) {
   });
 
   useEffect(() => {
-    AsyncStorage.getItem('personalAppMsgs').then(
+    console.log(itemId)
+    AsyncStorage.getItem('personalAppItems').then(
       data => {
         if (data) {
           let messages = JSON.parse(data);
-          let message = messages.filter(item => item._id == itemId)[0];
-
+          let message = messages.filter(item => item.id == itemId)[0];
+          console.log(message)
           setValue(prevState => {
-            return { ...prevState, messages: messages, message: message };
+            return { ...prevState, messages: messages, message: message.message };
           });
         }
       },
@@ -90,7 +91,7 @@ export default function MessageDetails({ route, navigation }) {
         
           <Card>
           <View style={{padding:10}}>
-              <Text>{value.message && value.message.body}</Text>
+              <Text>{value.message}</Text>
               </View>
           </Card>
         
