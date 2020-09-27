@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { navigationRef } from './NavigationService';
 
 import MessageDetails from 'app/screens/MessageDetails';
+import JournalForm from 'app/screens/JournalForm';
 import Home from 'app/screens/Home';
 
 const Stack = createStackNavigator();
@@ -31,6 +32,20 @@ function App() {
         <Stack.Screen
           name="MessageDetails"
           component={MessageDetails}
+          options={{
+            title: '',
+            headerStyle: {
+              backgroundColor: '#f4511e',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        />
+        <Stack.Screen
+          name="JournalForm"
+          component={JournalForm}
           options={{
             title: '',
             headerStyle: {

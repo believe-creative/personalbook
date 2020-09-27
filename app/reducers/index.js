@@ -1,6 +1,9 @@
-/*
- * combines all th existing reducers
- */
-import * as loadingReducer from './loadingReducer';
-import * as loginReducer from './loginReducer';
-export default Object.assign(loginReducer, loadingReducer);
+import { combineReducers } from "redux-immutable";
+import { connectRouter } from "connected-react-router";
+import ItemsReducer from "./items";
+
+export default  
+   {
+    items: ItemsReducer
+  };
+

@@ -6,9 +6,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  login: {
-    padding: 8,
-  },
+  list:{
+    padding:10,
+    height:40,
+    overflow:"hidden",
+    borderBottomColor:"#eeeeee",
+    borderBottomWidth:1
+  }
 });
 
 export default styles;

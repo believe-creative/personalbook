@@ -15,13 +15,10 @@ import SmsAndroid from 'react-native-get-sms-android';
 import { ListItem, Button, Icon, Subheader } from 'react-native-material-ui';
 import { AsyncStorage, TouchableOpacity } from 'react-native';
 import Menu, { MenuItem, MenuDivider } from 'react-native-material-menu';
-const prepareitems = () => { };
-
-const pluck = (array, keys) => {
-  return array.map(function (item) {
-    return item[key];
-  });
-};
+import { connect } from "react-redux";
+import * as Actions from "../../actions";
+const DEBIT = -1
+const CREDIT = 1
 
 var styles = StyleSheet.create({
   mainviewStyle: {
@@ -120,7 +117,7 @@ const mystyles = StyleSheet.create({
   },
 });
 
-export default function Home({ navigation }) {
+function Home(props) {
   let _menu = null;
   const [value, setValue] = useState({
     items: [],
@@ -132,6 +129,7 @@ export default function Home({ navigation }) {
     end_date: null,
     showFilter: false
   });
+  const [showFilter,setFilter]=useState(false);
   // const setRead = (message, messages, selected) => {
   //   console.log('setRead');
   //   if (message && value.longPressed == false) {
@@ -149,7 +147,7 @@ export default function Home({ navigation }) {
   //       };
   //     });
   //     AsyncStorage.setItem('personalAppItems', JSON.stringify(msgs));
-  //     navigation.navigate('MessageDetails', {
+  //     props.navigation.navigate('MessageDetails', {
   //       itemId: message._id,
   //     });
   //   } else if (selected) {
@@ -193,102 +191,130 @@ export default function Home({ navigation }) {
   //   }
   // };
   React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
+    props.navigation.setOptions({
+      headerRight: () => (<View style={{display:"flex",flexDirection:"row"}}>
         <TouchableOpacity style={{ padding: 10 }} onPress={() => {
-          console.log(value.showFilter)
-          setValue(prevState => {
-            return { ...prevState, showFilter: value.showFilter?false:true };
-          });
+          console.log(showFilter)
+          setFilter(prev => !prev );
+         
+          console.log(showFilter)
         }} ><Icon color="white" name="filter-list" /></TouchableOpacity>
+        <TouchableOpacity style={{ padding: 10 }} onPress={() => {
+          props.navigation.navigate('JournalForm', {
+            itemId: null,
+          });
+        }} ><Icon color="white" name="add" /></TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation]);
-  const DEBIT = -1
-  const CREDIT = 1
-  const storeLocally = msgs => {
-    if (msgs) {
-      let items = value.items;
-      msgs = JSON.parse(msgs);
-      msgs = msgs.filter(item => item.body.toLowerCase().indexOf("a/c") >= 0)
-      msgs.map(item => {
+  }, [props.navigation]);
 
-        let message = items.filter(itm => item._id == itm.msg_id)[0];
-        if (!message) {
-          let amount = item.body.match(/[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})/)
-
-          let obj = {
-            msg_id: item._id,
-            id: items.length,
-            message: item.body,
-            date: item.date,
-            type: item.body.indexOf("debited") >= 0 ? DEBIT : CREDIT,
-            formatted_date: DateTime.fromMillis(item.date).toLocaleString(DateTime.DATETIME_SHORT),
-            amount: parseFloat(amount[0].replace(",", "")),
-            formatted_amount: amount
-          }
-          items.push(obj)
-        }
-        return item;
-      });
-      setValue(prevState => {
-        return { ...prevState, items: items, selecteditems: items };
-      });
-      AsyncStorage.setItem('personalAppItems', JSON.stringify(items));
-    } else {
-      AsyncStorage.getItem('personalAppItems').then(
-        data => {
-          if (data) {
-            setValue(prevState => {
-              return { ...prevState, items: JSON.parse(data) };
-            });
-          } else {
-            AsyncStorage.setItem('personalAppItems', '[]');
-          }
-        },
-        e => {
-          console.log(e);
-        },
-      );
-    }
-  };
-  const getSMSes = async () => {
-    let filter = {
-      box: 'inbox', // 'inbox' (default), 'sent', 'draft', 'outbox', 'failed', 'queued', and '' for all
-      // the next 4 filters should NOT be used together, they are OR-ed so pick one
-      bodyRegex: '(.*)(credited|debited)(.*)', // content to match
-      // the next 2 filters can be used for pagination
-    };
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_SMS,
-        {
-          title: 'personal book',
-          message: 'Need to read SMS',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('SMS permission');
-        SmsAndroid.list(
-          JSON.stringify(filter),
-          fail => {
-            console.log('Failed with this error: ' + fail);
-          },
-          (count, smsList) => {
-            storeLocally(smsList);
-          },
-        );
-      } else {
-        console.log('SMS permission denied');
+  React.useEffect(()=>{
+    console.log(props.permission,"000000000")
+      if(!props.permission){
+          props.askPermission({})
       }
-    } catch (err) {
-      console.warn(err);
-    }
-    console.log('here');
-  };
+      if((!props.items || props.items.length<=0) && props.permission){
+          props.getItems({page:0})
+      }
+  },[])
+  React.useEffect(()=>{
+    console.log(props.permission,"------------------------")
+      if(!props.permission){
+          props.askPermission({})
+      }
+      if((!props.items || props.items.length<=0) && props.permission){
+          props.getItems({page:0})
+      }
+  },[props.permission])
+  React.useEffect(()=>{
+    console.log(props.error)
+  },[props.error])
+  
+  // const storeLocally = msgs => {
+  //   if (msgs) {
+  //     let items = value.items;
+  //     msgs = JSON.parse(msgs);
+  //     msgs = msgs.filter(item => item.body.toLowerCase().indexOf("a/c") >= 0)
+  //     msgs.map(item => {
+
+  //       let message = items.filter(itm => item._id == itm.msg_id)[0];
+  //       if (!message) {
+  //         let amount = item.body.match(/[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})/)
+
+  //         let obj = {
+  //           msg_id: item._id,
+  //           id: items.length,
+  //           message: item.body,
+  //           date: item.date,
+  //           type: item.body.indexOf("debited") >= 0 ? DEBIT : CREDIT,
+  //           formatted_date: DateTime.fromMillis(item.date).toLocaleString(DateTime.DATETIME_SHORT),
+  //           amount: parseFloat(amount[0].replace(",", "")),
+  //           formatted_amount: amount
+  //         }
+  //         items.push(obj)
+  //       }
+  //       return item;
+  //     });
+  //     setValue(prevState => {
+  //       return { ...prevState, items: items, selecteditems: items };
+  //     });
+  //     AsyncStorage.setItem('personalAppItems', JSON.stringify(items));
+  //   } else {
+  //     AsyncStorage.getItem('personalAppItems').then(
+  //       data => {
+  //         console.log(data)
+  //         if (data) {
+  //           setValue(prevState => {
+  //             return { ...prevState, items: JSON.parse(data), selecteditems: JSON.parse(data) };
+  //           });
+  //         } else {
+  //           AsyncStorage.setItem('personalAppItems', '[]');
+  //         }
+  //       },
+  //       e => {
+  //         console.log(e);
+  //       },
+  //     );
+  //   }
+  // };
+  // const getSMSes = async () => {
+  //   let filter = {
+  //     box: 'inbox', // 'inbox' (default), 'sent', 'draft', 'outbox', 'failed', 'queued', and '' for all
+  //     // the next 4 filters should NOT be used together, they are OR-ed so pick one
+  //     bodyRegex: '(.*)(credited|debited)(.*)', // content to match
+  //     // the next 2 filters can be used for pagination
+  //   };
+  //   try {
+  //     const granted = await PermissionsAndroid.request(
+  //       PermissionsAndroid.PERMISSIONS.READ_SMS,
+  //       {
+  //         title: 'personal book',
+  //         message: 'Need to read SMS',
+  //         buttonNeutral: 'Ask Me Later',
+  //         buttonNegative: 'Cancel',
+  //         buttonPositive: 'OK',
+  //       },
+  //     );
+  //     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+  //       console.log('SMS permission');
+  //       SmsAndroid.list(
+  //         JSON.stringify(filter),
+  //         fail => {
+  //           console.log('Failed with this error: ' + fail);
+  //         },
+  //         (count, smsList) => {
+  //           storeLocally(smsList);
+  //         },
+  //       );
+  //     } else {
+  //       console.log('SMS permission denied');
+  //     }
+  //   } catch (err) {
+  //     console.warn(err);
+  //   }
+  //   console.log('here');
+  // };
   // const selectItem = id => {
   //   let selecteditems = value.selecteditems;
   //   let longPressed = value.longPressed;
@@ -327,18 +353,8 @@ export default function Home({ navigation }) {
       };
     });
   }
-  useEffect(() => {
-    storeLocally();
 
-    getSMSes();
-    let interval = setInterval(() => {
-      getSMSes();
-    }, 60000);
-    setValue(prevState => {
-      return { ...prevState, interval: interval };
-    });
-  }, []);
-  const selecteditems = value.selecteditems.filter(item =>
+  const selecteditems = props.items.filter(item =>
     (value.search && value.search.length > 0) ? item.message.toLowerCase().indexOf(value.search.toLowerCase()) >= 0 : true
   ).filter(item => value.start_date ? item.date >= DateTime.fromSQL(value.start_date).toMillis() : true).filter(item => value.end_date ? item.date <= DateTime.fromSQL(value.end_date).toMillis() : true)
   
@@ -346,8 +362,8 @@ export default function Home({ navigation }) {
   const debit_amount = selecteditems.filter(item => item.type == DEBIT).map(item => item.amount).reduce((a, b) => a + b, 0)
   const final_result = credit_amount * CREDIT + debit_amount * DEBIT
   return (
-    <View style={{ ...styles.mainviewStyle, paddingTop: value.showFilter ? 120 : 0 }}>
-      {value.showFilter && <View style={styles.filters}>
+    <View style={{ ...styles.mainviewStyle, paddingTop: showFilter ? 120 : 0 }}>
+      {showFilter && <View style={styles.filters}>
         <View style={{ flex: 1, flexDirection: "row", width: "100%", justifyContent: "space-between" }}>
           <SearchBar
 
@@ -445,10 +461,13 @@ export default function Home({ navigation }) {
                 primaryText: {
                   color: item.type == DEBIT ? "red" : "green",
                   textAlign: item.type == DEBIT ? "right" : "left"
+                },
+                secondaryText:{
+                  backgroundColor:item.journal?"cyan":"white"
                 }
               }}
               onPress={() => {
-                navigation.navigate('MessageDetails', {
+                props.navigation.navigate('MessageDetails', {
                   itemId: item.id,
                 });
               }}
@@ -580,7 +599,7 @@ export default function Home({ navigation }) {
     //                 }
     //               }}
     //               onPress={() => {
-    //                 navigation.navigate('MessageDetails', {
+    //                 props.navigation.navigate('MessageDetails', {
     //                   itemId: item.id,
     //                 });
     //               }}
@@ -607,3 +626,24 @@ export default function Home({ navigation }) {
     // </>
   );
 }
+
+const mapStateToProps = state => {
+  return {
+    items: state["items"].items,
+    permission: state["items"].premission
+  };
+};
+
+function mapDispatchToProps(dispatch) {
+  return {
+    getItems: (data) =>
+      dispatch(Actions.getItems.request(data)),
+    askPermission: (data) =>
+      dispatch(Actions.askPermission.request(data))
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Home);
