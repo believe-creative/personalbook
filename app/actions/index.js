@@ -14,12 +14,24 @@ function createRequestTypes(base) {
 export const GETITEMS = createRequestTypes("GETITEMS");
 export const ASKPERMISSION = createRequestTypes("ASKPERMISSION");
 export const GETITEM = "GETITEM";
+export const ADDITEM = "ADDITEM";
+export const UPDATEITEM = "UPDATEITEM";
+export const REMOVEITEM = "REMOVEITEM";
 function action(type, payload = {}) {
   return { type, ...payload };
 }
 
 export function getItem(payload) {
   return { type: "GETITEM", payload };
+}
+export function addItem(payload) {
+  return { type: "ADDITEM", payload };
+}
+export function updateItem(payload) {
+  return { type: "UPDATEITEM", payload };
+}
+export function removeItem(payload) {
+  return { type: "REMOVEITEM", payload };
 }
 
 

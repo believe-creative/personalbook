@@ -84,6 +84,40 @@ export default (state = intialState, action) => {
         isLoading: false,
         item:state.items?state.items.filter(item=>item.id=action.payload)[0]:null
       };
+    case ActionTypes.UPDATEITEM:
+      let exists=false
+      let items=state.items.map(item=>{
+        if(item.id==action.payload.id){
+          exists=true
+          return action.payload
+        }
+        item
+      })
+      return {
+        ...state,
+        isLoading: false,
+        item:exists?action.payload:null,
+        items:items
+      };
+    case ActionTypes.ADDITEM:
+      custom_id=state.custom_id
+      let item=action.payload
+      item.id=custom_id++
+      let items=state.items
+      items.push(item)
+      return {
+        ...state,
+        isLoading: false,
+        item:item,
+        custom_id:custom_id,
+        items:items
+      };
+    case ActionTypes.REMOVEITEM:
+      return {
+        ...state,
+        isLoading: false,
+        item:state.items?state.items.filter(item=>item.id=action.payload)[0]:null
+      };
   
     default:
       return state;

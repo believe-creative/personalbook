@@ -64,8 +64,8 @@ const defaultItem = {
   formatted_amount: 0,
   data: [{ name: "", debit: 0, credit: 0 }]
 }
-export default function JournalForm({ route, navigation }) {
-  const { itemId } = route.params;
+export default function JournalForm(props) {
+  const { itemId } = props.route.params;
   const [value, setValue] = useState({
     item: null,
     interval: null,
@@ -74,22 +74,19 @@ export default function JournalForm({ route, navigation }) {
   });
 
   useEffect(() => {
-    AsyncStorage.getItem('personalAppItems').then(
-      data => {
-        if (data) {
-          let messages = JSON.parse(data);
-          let message = messages.filter(item => item.id == itemId)[0];
-          console.log(message)
-          setValue(prevState => {
-            return { ...prevState, messages: messages, item: message };
-          });
-        }
-      },
-      e => {
-        console.log(e);
-      },
-    );
+   if(itemId){
+     props.getItem(itemId)
+   }
   }, []);
+  useEffect(()=>{
+    if(props.item){
+      setValue(prevState => {
+        return { ...prevState, item: props.item };
+      });
+    }
+  },[props.item])
+
+ 
   return (
     <>
       <ScrollView
@@ -102,41 +99,22 @@ export default function JournalForm({ route, navigation }) {
             setValue(prevState => {
               return { ...prevState, submitting: true };
             });
-            let messages = value.messages;
-            let message = messages.filter(message => message.id == itemId)
-            values.item.id = (values.item.id || itemId) ? (values.item.id || itemId) : messages.length
             let credit=0, debit=0
             for (let i = 0; i < values.item.data.length; i++) {
               credit += values.item.data[i].credit
               debit += values.item.data[i].debit
             }
-            values.item.amount = credit + debit * -1
-            values.item.type = values.item.amount >= 0 ? 1 : -1
-            values.item.amount = Math.abs(values.item.amount)
-            values.item.formatted_amount = values.item.amount
-            if (itemId) {
-              messages = messages.map(message => {
-                if (message.id == values.item.id) {
-                  message = values.item
-                }
-                return message
-              })
+            item=values.item || defaultItem;
+            item.amount = credit + debit * -1
+            item.type = item.amount >= 0 ? 1 : -1
+            item.amount = Math.abs(item.amount)
+            item.formatted_amount = item.amount
+            if(itemId){
+                props.updateItem(item);
             }
-            else {
-              messages.push(values.item)
+            else{
+              props.addItem(item);
             }
-
-            AsyncStorage.setItem('personalAppItems', JSON.stringify(messages)).then(
-              data => {
-                setValue(prevState => {
-                  return { ...prevState, submitting: false, messages: messages };
-                });
-                navigation.navigate('Home');
-              },
-              e => {
-                console.log(e);
-              },
-            );
           }}
         >
           {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, setFieldValue, submitForm }) => (
@@ -203,3 +181,26 @@ export default function JournalForm({ route, navigation }) {
     </>
   );
 }
+const mapStateToProps = state => {
+  return {
+    item: state["items"].item
+  };
+};
+
+function mapDispatchToProps(dispatch) {
+  return {
+    getItem: (data) =>
+      dispatch(Actions.getItem(data)),
+    addItem: (data) =>
+      dispatch(Actions.addItem(data)),
+    updateItem: (data) =>
+      dispatch(Actions.updateItem(data)),
+    removeItem: (data) =>
+      dispatch(Actions.removeItem(data)),
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Home);
